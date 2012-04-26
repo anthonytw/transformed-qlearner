@@ -1,6 +1,7 @@
 import pygame, sys
 from pygame.locals import *
 from world import World
+import transforms
 
 # Initialize pygame.
 pygame.init()
@@ -9,16 +10,41 @@ fps_clock   = pygame.time.Clock()
 fps         = 10
 tpt         = 1.0 / fps
 
+# Determine action interval.
+action_interval_s = 1.0
+action_interval_t = int(fps * action_interval_s)
+
 # Initialize world.
-world = World("resources/initial_state.xml")
+world = World.from_file("resources/initial_state.xml")
 world.redraw()
+
+# Initialize transforms.
+transform_set = transforms.TransformSet("resources")
 
 # Initialize window.
 window_surface = pygame.display.set_mode((world.get_width(), world.get_height()))
 pygame.display.set_caption('CAP 6671 - Final Project')
 
 # Execute application.
+ticks_to_next_action = action_interval_t
+won = False
 while True:
+    # Decrement action ticker.
+    ticks_to_next_action -= 1
+    
+    # Time for action?
+    if ticks_to_next_action <= 0:
+        ticks_to_next_action = action_interval_t
+        if not won:
+            action, q_value = transform_set.get_best_action(world.agent_state)
+            world.agent_state = world.perform_action(action)
+            print "Performed action %s for Q-value %d" % (World.Action.name(action), q_value)
+            
+            # Won?
+            if world.agent_state.arrows == World.ArrowState.Arrows_Complete:
+                won = True
+                print "Finished!"
+    
     # Draw world.
     world.redraw();
     world.draw_to(window_surface, (0, 0))
@@ -41,39 +67,39 @@ while True:
                 
             # Movement.
             elif event.key == K_UP:
-                world.perform_action(World.Action.Move_Up)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Move_Up)
             elif event.key == K_DOWN:
-                world.perform_action(World.Action.Move_Down)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Move_Down)
             elif event.key == K_LEFT:
-                world.perform_action(World.Action.Move_Left)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Move_Left)
             elif event.key == K_RIGHT:
-                world.perform_action(World.Action.Move_Right)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Move_Right)
                 
             # Minerals.
             elif event.key == K_d:
-                world.perform_action(World.Action.Dig)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Dig)
             elif event.key == K_s:
-                world.perform_action(World.Action.Separate)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Separate)
             elif event.key == K_e:
-                world.perform_action(World.Action.Extract)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Extract)
                 
             # Bamboo.
             elif event.key == K_t:
-                world.perform_action(World.Action.Till)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Till)
             elif event.key == K_p:
-                world.perform_action(World.Action.Plant)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Plant)
             elif event.key == K_h:
-                world.perform_action(World.Action.Harvest)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Harvest)
                 
             # Arrows.
             elif event.key == K_1:
-                world.perform_action(World.Action.Form_Tips)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Form_Tips)
             elif event.key == K_2:
-                world.perform_action(World.Action.Form_Fins)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Form_Fins)
             elif event.key == K_3:
-                world.perform_action(World.Action.Form_Shafts)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Form_Shafts)
             elif event.key == K_4:
-                world.perform_action(World.Action.Connect_Parts)
+                world.agent_state = world.perform_action(world.agent_state, World.Action.Connect_Parts)
     
     pygame.display.update()
     fps_clock.tick( fps )

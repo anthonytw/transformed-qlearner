@@ -1,5 +1,6 @@
 import numpy
 import random
+import policy
 
 class QLearner:
     # Initialize the state space Q-learner representation.
@@ -8,12 +9,14 @@ class QLearner:
         state_space,
         actions,
         action_callback,
+        reset_callback,
         learning_rate = 0.1,
         discount_factor = 0.6):
         
         self.state_space = state_space
         self.actions = actions
         self.action_callback = action_callback
+        self.reset_callback = reset_callback
         
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
@@ -42,7 +45,7 @@ class QLearner:
     
     # Set a value in the R-table.
     def set_r_value(self, state, value):
-        self.r_table.itemset(state, value)
+        self.r_table.itemset(tuple(state), value)
         
     # Get Q-value at a state X action.
     def get_q_value(self, state, action):
@@ -64,6 +67,31 @@ class QLearner:
         sxa = state[:]
         sxa.append(action)
         self.q_table.itemset(tuple(sxa), value)
+        
+    # Return the policy with best values chosen at each state.
+    def get_policy(self):
+        policy = Policy()
+        policy.value_map  = numpy.zeros(self.state_space_dim)
+        policy.action_map = numpy.zeros(self.state_space_dim, numpy.int)
+        
+        for state_index in xrange(policy.action_map.size):
+            state = list(numpy.unravel_index(state_index, policy.action_map.shape))
+            
+            # Find best action and associated Q-value.
+            best_action_index = 0
+            best_action_value = 0
+            for action_index in xrange(self.action_dim):
+                q_value = self.get_q_value(state, action_index)
+                if q_value > best_action_value:
+                    best_action_value = q_value
+                    best_action_index = action_index
+            
+            # Set action and value in map.
+            policy.value_map.itemset(tuple(state), best_action_value)
+            policy.action_map.itemset(tuple(state), self.actions[best_action_index])
+        
+        # Done.
+        return policy
         
     # Select an action at random.
     def select_random_action(self):
@@ -88,17 +116,19 @@ class QLearner:
         return next_state, reward
     
     # Execute a Q-learning episode.
-    def execute_episode(self, initial_state, goal_state, max_actions):
+    def execute_episode(self, initial_state, goal_states, max_actions):
         # Execute episode iterations.
         current_state = initial_state
         for iteration in xrange(max_actions):
             # At goal state?
-            if tuple(current_state) == goal_state:
+            if tuple(current_state) in goal_states:
                 break;
             
             # Execute random action.
             action = self.select_random_action()
             next_state, reward = self.transition(current_state, action)
+            
+            #print str(current_state) + " + A:[i" + str(action) + "|" + str(self.actions[action]) + "] --> " + str(next_state) + " R:" + str(reward)
             
             # Update Q-table.
             current_q_value = self.get_q_value(current_state, action)
@@ -116,8 +146,9 @@ class QLearner:
             current_state = next_state
             
     # Execute Q-learner.
-    def execute(self, goal_state, episodes = 500, max_actions = 100):
+    def execute(self, goal_state, episodes = 100, max_actions = 20):
         while episodes > 0:
+            self.reset_callback()
             initial_state = self.select_random_state()
             self.execute_episode(initial_state, goal_state, max_actions)
             episodes -= 1

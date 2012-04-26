@@ -40,6 +40,21 @@ class World:
         Form_Fins           = 11
         Form_Shafts         = 12
         Connect_Parts       = 13
+        name = (
+            "Move Down",
+            "Move Left",
+            "Move Right",
+            "Move Up",
+            "Dig",
+            "Separate",
+            "Extract",
+            "Till",
+            "Plant",
+            "Harvest",
+            "Form Tips",
+            "Form Fins",
+            "Form Shafts",
+            "Connect Parts" )
         
     # Defines a state.
     class State:
@@ -51,15 +66,30 @@ class World:
             self.bamboo     = 0
             self.arrows     = World.ArrowState.Not_Started
             
+        @classmethod
+        def from_state(cls, state):
+            new_state = World.State(state._world)
+            new_state.x = state.x
+            new_state.y = state.y
+            new_state.minerals = state.minerals
+            new_state.bamboo = state.bamboo
+            new_state.arrows = state.arrows
+            return new_state
+            
         def site_state(self):
             return self._world.world_state[self.y][self.x]
+        
+        def __str__(self):
+            return "{x: %d, y: %d, minerals: %d, bamboo: %d, arrows: %d}" % \
+                (self.x, self.y, self.minerals, self.bamboo, self.arrows)
     
     # Initialize.
-    def __init__(self, config_filename):
-        assert(config_filename != "")
-        
+    def __init__(self, cell_width, cell_height): 
         # Define world variables.
         self.agent_state = World.State(self)
+        self.cell_width = cell_width
+        self.cell_height = cell_height
+        self.world_state = [[0 for x in xrange(cell_width)] for y in xrange(cell_height)]
         
         # Define some parameters
         self.needed_minerals = 50
@@ -74,37 +104,41 @@ class World:
         self._cell_pixel_half_width = self._cell_pixel_width / 2
         self._cell_pixel_height = 32
         self._cell_pixel_half_height = self._cell_pixel_height / 2
-        
-        # Load configuration.
-        self.load_configuration(config_filename)
-        
+
     # Load world from configuration file.
-    def load_configuration(self, filename):
+    @classmethod
+    def from_file(cls, filename):
+        assert(filename != "")
+        
         configc = ConfigParser(filename)
         config = configc.elements['config']
         
-        # Configuration stuff.
-        self.draw_grid = config['draw_grid']
-        
         # Set world variables.
-        self.cell_width = config['map']['width']
-        self.cell_height = config['map']['height']
-        self.world_state = copy.deepcopy(config['map']['states'])
+        cell_width = config['map']['width']
+        cell_height = config['map']['height']
         
-        self.agent_state.x = config['agent']['x']
-        self.agent_state.y = config['agent']['y']
+        world = World(cell_width, cell_height)
+        world.world_state = copy.deepcopy(config['map']['states'])
+        
+        world.agent_state.x = config['agent']['x']
+        world.agent_state.y = config['agent']['y']
+        
+        # Configuration stuff.
+        world.draw_grid = config['draw_grid']
         
         # Load agent sprite.
-        self.agent_sprite = Agent(config['agent']['filename'])
+        world.agent_sprite = Agent(config['agent']['filename'])
         
         # Other parameters.
-        self._surface_width  = self._cell_pixel_width * self.cell_width
-        self._surface_height = self._cell_pixel_height * self.cell_height
-        self._surface = pygame.Surface((self._surface_width, self._surface_height))
+        world._surface_width  = world._cell_pixel_width * world.cell_width
+        world._surface_height = world._cell_pixel_height * world.cell_height
+        world._surface = pygame.Surface((world._surface_width, world._surface_height))
         
-        self._tileset = Tileset(
-            config['tileset']['filename'], self._cell_pixel_width, self._cell_pixel_height)
-        self._dirty = True
+        world._tileset = Tileset(
+            config['tileset']['filename'], world._cell_pixel_width, world._cell_pixel_height)
+        world._dirty = True
+        
+        return world
         
     # Get world width / height.
     def get_width(self):
@@ -166,77 +200,91 @@ class World:
                 self.bamboo_queue.append(elem)
     
     # Handle an action.
-    def perform_action(self, action):
+    def perform_action(self, state, action):
+        new_state = World.State.from_state(state)
+        
         # ----------- MOVEMENT #
         # Move down.
         if   World.Action.Move_Down == action:
-            if self.agent_state.y < (self.cell_height - 1):
-                self.agent_state.y += 1
-            self.agent_sprite.handle_move(action)
+            if new_state.y < (self.cell_height - 1):
+                new_state.y += 1
+            if hasattr(self, 'agent_sprite'):
+                self.agent_sprite.handle_move(action)
         elif World.Action.Move_Left == action:
-            if self.agent_state.x > 0:
-                self.agent_state.x -= 1
-            self.agent_sprite.handle_move(action)
+            if new_state.x > 0:
+                new_state.x -= 1
+            if hasattr(self, 'agent_sprite'):
+                self.agent_sprite.handle_move(action)
         elif World.Action.Move_Right == action:
-            if self.agent_state.x < (self.cell_width - 1):
-                self.agent_state.x += 1
-            self.agent_sprite.handle_move(action)
+            if new_state.x < (self.cell_width - 1):
+                new_state.x += 1
+            if hasattr(self, 'agent_sprite'):
+                self.agent_sprite.handle_move(action)
         elif World.Action.Move_Up == action:
-            if self.agent_state.y > 0:
-                self.agent_state.y -= 1
-            self.agent_sprite.handle_move(action)
+            if new_state.y > 0:
+                new_state.y -= 1
+            if hasattr(self, 'agent_sprite'):
+                self.agent_sprite.handle_move(action)
         
         # ----------- MINERALS #
         elif World.Action.Dig == action:
-            if self.agent_state.site_state() == World.SiteState.Mineral_Deposit:
-                self.world_state[self.agent_state.y][self.agent_state.x] = \
+            if new_state.site_state() == World.SiteState.Mineral_Deposit:
+                self.world_state[new_state.y][new_state.x] = \
                     World.SiteState.Minerals_Exposed
         elif World.Action.Separate == action:
-            if self.agent_state.site_state() == World.SiteState.Minerals_Exposed:
-                self.world_state[self.agent_state.y][self.agent_state.x] = \
+            if new_state.site_state() == World.SiteState.Minerals_Exposed:
+                self.world_state[new_state.y][new_state.x] = \
                     World.SiteState.Minerals_Separated
         elif World.Action.Extract == action:
-            if self.agent_state.site_state() == World.SiteState.Minerals_Separated:
-                self.world_state[self.agent_state.y][self.agent_state.x] = \
+            if new_state.site_state() == World.SiteState.Minerals_Separated:
+                self.world_state[new_state.y][new_state.x] = \
                     World.SiteState.Useless
-                self.agent_state.minerals += 50
+                new_state.minerals += 50
         
         # ----------- BAMBOO #
         elif World.Action.Till == action:
-            if self.agent_state.site_state() == World.SiteState.Good_Soil:
-                self.world_state[self.agent_state.y][self.agent_state.x] = \
+            if new_state.site_state() == World.SiteState.Good_Soil:
+                self.world_state[new_state.y][new_state.x] = \
                     World.SiteState.Tilled
         elif World.Action.Plant == action:
-            if self.agent_state.site_state() == World.SiteState.Tilled:
-                self.world_state[self.agent_state.y][self.agent_state.x] = \
+            if new_state.site_state() == World.SiteState.Tilled:
+                self.world_state[new_state.y][new_state.x] = \
                     World.SiteState.Bamboo_Planted
                 self.bamboo_queue.append(
-                    [(self.agent_state.x, self.agent_state.y), self.bamboo_grow_delay])
+                    [(new_state.x, new_state.y), self.bamboo_grow_delay])
         elif World.Action.Harvest == action:
-            if self.agent_state.site_state() == World.SiteState.Bamboo_Sprouted:
-                self.world_state[self.agent_state.y][self.agent_state.x] = \
+            if new_state.site_state() == World.SiteState.Bamboo_Sprouted:
+                self.world_state[new_state.y][new_state.x] = \
                     World.SiteState.Useless
-                self.agent_state.bamboo += 50
+                new_state.bamboo += 50
         
         # ----------- ARROWS #
         elif World.Action.Form_Tips == action:
-            if (self.agent_state.arrows == World.ArrowState.Not_Started) and \
-                (self.agent_state.minerals >= self.needed_minerals) and \
-                (self.agent_state.bamboo >= self.needed_bamboo):
-                self.agent_state.arrows = World.ArrowState.Tips_Formed
+            if (new_state.arrows == World.ArrowState.Not_Started) and \
+                (new_state.minerals >= self.needed_minerals) and \
+                (new_state.bamboo >= self.needed_bamboo):
+                new_state.arrows = World.ArrowState.Tips_Formed
         elif World.Action.Form_Fins == action:
-            if self.agent_state.arrows == World.ArrowState.Tips_Formed:
-                self.agent_state.arrows = World.ArrowState.Fins_Formed
+            if (new_state.arrows == World.ArrowState.Tips_Formed) and \
+                (new_state.minerals >= self.needed_minerals) and \
+                (new_state.bamboo >= self.needed_bamboo):
+                new_state.arrows = World.ArrowState.Fins_Formed
         elif World.Action.Form_Shafts == action:
-            if self.agent_state.arrows == World.ArrowState.Fins_Formed:
-                self.agent_state.arrows = World.ArrowState.Shafts_Formed
+            if (new_state.arrows == World.ArrowState.Fins_Formed) and \
+                (new_state.minerals >= self.needed_minerals) and \
+                (new_state.bamboo >= self.needed_bamboo):
+                new_state.arrows = World.ArrowState.Shafts_Formed
         elif World.Action.Connect_Parts == action:
-            if self.agent_state.arrows == World.ArrowState.Shafts_Formed:
-                self.agent_state.arrows = World.ArrowState.Arrows_Complete
-                print "WIN!"
-                raise
+            if (new_state.arrows == World.ArrowState.Shafts_Formed) and \
+                (new_state.minerals >= self.needed_minerals) and \
+                (new_state.bamboo >= self.needed_bamboo):
+                new_state.minerals -= self.needed_minerals
+                new_state.bamboo -= self.needed_bamboo
+                new_state.arrows = World.ArrowState.Arrows_Complete
         
         # ----------- SOMETHING ELSE?!?! #
         else:
             print "Invalid action sent: " + str(action)
             raise
+        
+        return new_state

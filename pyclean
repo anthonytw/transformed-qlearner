@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rm -v *.pyc
+cd src
+rm -v *.pyc
+cd transforms
+rm -v *.pyc
