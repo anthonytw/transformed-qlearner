@@ -1,6 +1,6 @@
 from world import World
 from qlearner import QLearner
-import cPickle
+import pickle
 
 # Bamboo transformation.
 class BambooTransform:
@@ -28,14 +28,14 @@ class BambooTransform:
     @classmethod
     def from_file(cls, filename):
         transform = cls()
-        transform.policy = cPickle.load(open(filename, "rb"))
+        transform.policy = pickle.load(open(filename, "rb"))
         return transform
     
     # Pull a policy action if the policy is set.
     def get_best_action(self, state):
         if self.policy == None:
             return World.Action.Move_Down, 0
-        return self.policy.item(state)
+        return self.policy.item(self.reduce_state(state))
         
     # Use the transformation to reduce a state.
     def reduce_state(self, state):

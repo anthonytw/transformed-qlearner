@@ -41,8 +41,8 @@ class Agent:
             by += quarter_offset + 12
         elif world.World.Action.Move_Up == action:
             by -= quarter_offset
-        bx = 0
-        by = 0
+        #bx = 0
+        #by = 0
         self.base_offset = (self.base[0] + bx, self.base[1] + by)
         
         self.draw_rect = pygame.Rect(

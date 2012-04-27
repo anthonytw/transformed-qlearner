@@ -1,6 +1,6 @@
 import numpy
 import random
-import policy
+from policy import *
 
 class QLearner:
     # Initialize the state space Q-learner representation.
@@ -34,6 +34,8 @@ class QLearner:
         self.state_space_action_dim.append(self.action_dim)
         
         # Initialize Q-table.
+        print len(self.state_space_action_dim)
+        print self.state_space_action_dim
         self.q_table = numpy.zeros(self.state_space_action_dim)
         
         # Initialize R-table.
@@ -145,10 +147,31 @@ class QLearner:
             # Update state.
             current_state = next_state
             
+        return iteration + 1
+            
     # Execute Q-learner.
     def execute(self, goal_state, episodes = 100, max_actions = 20):
+        scale = 100.0 / episodes
+        on_episode = 0
+        average_iterations = 0.0
         while episodes > 0:
             self.reset_callback()
             initial_state = self.select_random_state()
-            self.execute_episode(initial_state, goal_state, max_actions)
+            
+            # Output status.
+            iterations = self.execute_episode(initial_state, goal_state, max_actions)
+            average_iterations = 0.5*(average_iterations + iterations)
+            
+            on_episode += 1
+            if (on_episode % 100) == 1:
+                # Calculate r_table sparseness.
+                nonzero_values = 0
+                for index in xrange(self.q_table.size):
+                    if self.q_table.item(index) != 0:
+                        nonzero_values += 1
+                print "Q-table occupancy: %.2f%%" % (nonzero_values * 100.0 / self.q_table.size)
+            if (on_episode % 50) == 1:
+                print "[%4d of %4d (%6.2f%%)] Iterations: %d; Average: %.2f" % \
+                    (on_episode, episodes, on_episode*scale, iterations, average_iterations)
+            
             episodes -= 1

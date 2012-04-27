@@ -1,0 +1,27 @@
+Action Map:
+array([[2, 2, 2],
+       [0, 0, 3],
+       [0, 1, 3]])
+Value Map:
+array([[ 59.99848353,  99.995002  ,  59.99640224],
+       [ 99.99916648,   0.        ,  99.99945312],
+       [ 59.99951056,  99.99984555,  59.99961637]])
+Begin running policy...
+ - [59] PositionTransform -> Move Up
+ - [ 0] MineralTransform -> Dig
+ - [ 0] BambooTransform -> Till
+ - [ 0] ArrowConstructionTransform -> Form Tips
+Performed action Move Up for Q-value 59
+
+ - [99] PositionTransform -> Move Left
+ - [ 0] MineralTransform -> Dig
+ - [ 0] BambooTransform -> Till
+ - [ 0] ArrowConstructionTransform -> Form Tips
+Performed action Move Left for Q-value 99
+
+ - [ 0] PositionTransform -> Move Down
+ - [ 0] MineralTransform -> Dig
+ - [59] BambooTransform -> Till
+ - [ 0] ArrowConstructionTransform -> Form Tips
+Performed action Till for Q-value 59
+

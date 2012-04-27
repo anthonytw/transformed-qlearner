@@ -40,6 +40,8 @@ class World:
         Form_Fins           = 11
         Form_Shafts         = 12
         Connect_Parts       = 13
+        
+        Do_Nothing          = 14
         name = (
             "Move Down",
             "Move Left",
@@ -54,7 +56,8 @@ class World:
             "Form Tips",
             "Form Fins",
             "Form Shafts",
-            "Connect Parts" )
+            "Connect Parts",
+            "Do Nothing" )
         
     # Defines a state.
     class State:
@@ -80,8 +83,8 @@ class World:
             return self._world.world_state[self.y][self.x]
         
         def __str__(self):
-            return "{x: %d, y: %d, minerals: %d, bamboo: %d, arrows: %d}" % \
-                (self.x, self.y, self.minerals, self.bamboo, self.arrows)
+            return "{x: %d, y: %d, minerals: %d, bamboo: %d, arrows: %d, site state: %d}" % \
+                (self.x, self.y, self.minerals, self.bamboo, self.arrows, self.site_state())
     
     # Initialize.
     def __init__(self, cell_width, cell_height): 
@@ -92,8 +95,8 @@ class World:
         self.world_state = [[0 for x in xrange(cell_width)] for y in xrange(cell_height)]
         
         # Define some parameters
-        self.needed_minerals = 50
-        self.needed_bamboo   = 50
+        self.needed_minerals = 150
+        self.needed_bamboo   = 150
         
         # Initialize bamboo growing queue.
         self.bamboo_grow_delay = 5.0
@@ -172,8 +175,8 @@ class World:
             for grid_row in xrange(self.cell_height):
                 for grid_col in xrange(self.cell_width):
                     cellRect = pygame.Rect(
-                        grid_col * self._cell_pixel_width,
-                        grid_row * self._cell_pixel_height,
+                        offset[0] + grid_col * self._cell_pixel_width,
+                        offset[1] + grid_row * self._cell_pixel_height,
                         self._cell_pixel_width, self._cell_pixel_height )
                     pygame.draw.rect(
                         surface,
@@ -281,6 +284,10 @@ class World:
                 new_state.minerals -= self.needed_minerals
                 new_state.bamboo -= self.needed_bamboo
                 new_state.arrows = World.ArrowState.Arrows_Complete
+                
+        # ----------- DO NOTHING! #
+        elif World.Action.Do_Nothing == action:
+            pass
         
         # ----------- SOMETHING ELSE?!?! #
         else:

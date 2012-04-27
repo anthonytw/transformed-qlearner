@@ -1,7 +1,6 @@
 from world import World
 from qlearner import QLearner
-import cPickle
-from qlearner import QLearner
+import pickle
 
 # Position transformation.
 class PositionTransform:
@@ -40,15 +39,14 @@ class PositionTransform:
     @classmethod
     def from_file(cls, filename):
         transform_function = cls()
-        print filename
-        transform_function.policy = cPickle.load(open(filename, "rb"))
+        transform_function.policy = pickle.load(open(filename, "rb"))
         return transform_function
     
     # Pull a policy action if the policy is set.
     def get_best_action(self, state):
         if self.policy == None:
             return World.Action.Move_Down, 0
-        return self.policy.item(state)
+        return self.policy.item(self.reduce_state(state))
         
     # Use the transformation to reduce a state.
     def reduce_state(self, state):
