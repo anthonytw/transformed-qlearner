@@ -15,7 +15,7 @@ action_interval_s = 0.5
 action_interval_t = int(fps * action_interval_s)
 
 # Initialize world.
-full_transform = False
+full_transform = True#False
 
 if full_transform:
     world = World.from_file("resources/initial_state_2x1.xml")

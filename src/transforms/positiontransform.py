@@ -117,7 +117,7 @@ class PositionTransformTrainer(PositionTransform):
         #print qlearner.r_table
         
         # Run Q-learner.
-        qlearner.execute(goal_states, 500, 100)
+        qlearner.execute(goal_states, 300, 50)
         
         # Return policy.
         return qlearner.get_policy()
@@ -146,26 +146,3 @@ class PositionTransformTrainer(PositionTransform):
         new_reduced_state = self.reduce_state(expanded_state)
         #print " -- Reduced state : " + str(new_reduced_state)
         return new_reduced_state
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        

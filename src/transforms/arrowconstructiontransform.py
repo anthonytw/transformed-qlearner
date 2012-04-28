@@ -91,7 +91,7 @@ class ArrowConstructionTransformTrainer(ArrowConstructionTransform):
         #print qlearner.r_table
         
         # Run Q-learner.
-        qlearner.execute(goal_states, 500, 100)
+        qlearner.execute(goal_states, 300, 30)
         
         # Return policy.
         return qlearner.get_policy()
@@ -121,26 +121,3 @@ class ArrowConstructionTransformTrainer(ArrowConstructionTransform):
         #print " -- Reduced state : " + str(new_reduced_state)
                 
         return new_reduced_state
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        

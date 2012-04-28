@@ -149,6 +149,7 @@ class FullTransformTrainer(FullTransform):
         # Initialize goal states.
         goal_states = []
         print "Enumerating goal states..."
+        print self.state_space_dim
         for state_index in xrange(qlearner.r_table.size):
             state = numpy.unravel_index(state_index, qlearner.r_table.shape)
             if state[FullTransform.StateOffset.Arrows] == World.ArrowState.Arrows_Complete:
@@ -161,7 +162,8 @@ class FullTransformTrainer(FullTransform):
         #print qlearner.r_table
         
         # Run Q-learner.
-        qlearner.execute(goal_states, 20000, 15)
+        print "Total states: %d" % (qlearner.r_table.size)
+        qlearner.execute(goal_states, 500000, 50)
         
         # Return policy.
         return qlearner.get_policy()

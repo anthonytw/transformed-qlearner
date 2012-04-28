@@ -10,6 +10,7 @@ import pickle
 #ptt_policy = position_transform_trainer.learn_policy()
 #pickle.dump(ptt_policy,open("resources/ptt_policy.pkl", "wb"))
 #print ptt_policy
+#print
 #
 ## Learn Q-table for mineral transform function.
 #print "Learning Q-table for mineral transform function..."
@@ -17,6 +18,7 @@ import pickle
 #mtt_policy = mineral_transform_trainer.learn_policy()
 #pickle.dump(mtt_policy,open("resources/mtt_policy.pkl", "wb"))
 #print mtt_policy
+#print
 #
 ## Learn Q-table for bamboo transform function.
 #print "Learning Q-table for bamboo transform function..."
@@ -24,6 +26,7 @@ import pickle
 #btt_policy = bamboo_transform_trainer.learn_policy()
 #pickle.dump(btt_policy,open("resources/btt_policy.pkl", "wb"))
 #print btt_policy
+#print
 #
 ## Learn Q-table for arrow construction transform function.
 #print "Learning Q-table for arrow construction transform function..."
@@ -31,6 +34,7 @@ import pickle
 #actt_policy = arrow_construction_transform_trainer.learn_policy()
 #pickle.dump(actt_policy,open("resources/actt_policy.pkl", "wb"))
 #print actt_policy
+#print
 
 # Learn Q-table for full state space transform function.
 print "Learning Q-table for full state space transform function..."

@@ -1,6 +1,7 @@
 import numpy
 import random
 from policy import *
+import time
 
 class QLearner:
     # Initialize the state space Q-learner representation.
@@ -34,8 +35,6 @@ class QLearner:
         self.state_space_action_dim.append(self.action_dim)
         
         # Initialize Q-table.
-        print len(self.state_space_action_dim)
-        print self.state_space_action_dim
         self.q_table = numpy.zeros(self.state_space_action_dim)
         
         # Initialize R-table.
@@ -154,12 +153,17 @@ class QLearner:
         scale = 100.0 / episodes
         on_episode = 0
         average_iterations = 0.0
+        max_iterations = 0
+        start_time_t = time.time()
+        start_time = time.clock()
         while episodes > 0:
             self.reset_callback()
             initial_state = self.select_random_state()
             
             # Output status.
             iterations = self.execute_episode(initial_state, goal_state, max_actions)
+            if iterations > max_iterations:
+                max_iterations = iterations
             average_iterations = 0.5*(average_iterations + iterations)
             
             on_episode += 1
@@ -171,7 +175,13 @@ class QLearner:
                         nonzero_values += 1
                 print "Q-table occupancy: %.2f%%" % (nonzero_values * 100.0 / self.q_table.size)
             if (on_episode % 50) == 1:
-                print "[%4d of %4d (%6.2f%%)] Iterations: %d; Average: %.2f" % \
-                    (on_episode, episodes, on_episode*scale, iterations, average_iterations)
+                print "[%4d of %4d (%6.2f%%)] Iterations: %d; Average: %.2f; Max: %d" % \
+                    (on_episode, episodes, on_episode*scale, iterations, average_iterations, max_iterations)
+                # Reset max...
+                max_iterations = 0
             
             episodes -= 1
+        end_time = time.clock()
+        end_time_t = time.time()
+        print "Elapsed wall time: %.4fms" % ((end_time_t-start_time_t)*1000.0)
+        print "Total learning time: %.2fms" % ((end_time-start_time)*1000.0)
